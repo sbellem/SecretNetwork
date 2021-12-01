@@ -22,7 +22,7 @@ export interface SecretJsSigningOptions {
   broadcastPollIntervalMs?: number;
 }
 
-export class SecretJs extends SigningCosmWasmClient {
+export class SecretNetworkSigningClient extends SigningCosmWasmClient {
   /**
    * Creates a client.
    */
@@ -30,14 +30,14 @@ export class SecretJs extends SigningCosmWasmClient {
     endpoint: string,
     signer: OfflineSigner,
     options: SecretJsSigningOptions = {}
-  ): Promise<SecretJs> {
+  ): Promise<SecretNetworkSigningClient> {
     const tmClient = await Tendermint34Client.connect(endpoint);
 
     if (!options.broadcastTimeoutMs) {
       options.broadcastTimeoutMs = 6_000;
     }
 
-    return new SecretJs(tmClient, signer, {
+    return new SecretNetworkSigningClient(tmClient, signer, {
       prefix: "secret",
       ...options,
     });
@@ -55,8 +55,8 @@ export class SecretJs extends SigningCosmWasmClient {
   public static async offline(
     signer: OfflineSigner,
     options: SecretJsSigningOptions = {}
-  ): Promise<SecretJs> {
-    return new SecretJs(undefined, signer, options);
+  ): Promise<SecretNetworkSigningClient> {
+    return new SecretNetworkSigningClient(undefined, signer, options);
   }
 
   protected constructor(
@@ -91,7 +91,7 @@ export class SecretJs extends SigningCosmWasmClient {
   }
 
   /**
-   * @deprecated The method should not be used
+   * @deprecated Use signAndBroadcast() to send transactions
    */
   public async upload(
     senderAddress: string,
@@ -99,12 +99,11 @@ export class SecretJs extends SigningCosmWasmClient {
     fee: StdFee,
     memo = ""
   ): Promise<UploadResult> {
-    //@ts-ignore
-    return;
+    throw "upload() is not supported, use signAndBroadcast() to send transactions";
   }
 
   /**
-   * @deprecated The method should not be used
+   * @deprecated Use signAndBroadcast() to send transactions
    */
   public async instantiate(
     senderAddress: string,
@@ -114,12 +113,11 @@ export class SecretJs extends SigningCosmWasmClient {
     fee: StdFee,
     options: InstantiateOptions = {}
   ): Promise<InstantiateResult> {
-    //@ts-ignore
-    return;
+    throw "instantiate() is not supported, use signAndBroadcast() to send transactions";
   }
 
   /**
-   * @deprecated The method should not be used
+   * @deprecated Use signAndBroadcast() to send transactions
    */
   public async updateAdmin(
     senderAddress: string,
@@ -128,12 +126,11 @@ export class SecretJs extends SigningCosmWasmClient {
     fee: StdFee,
     memo = ""
   ): Promise<ChangeAdminResult> {
-    //@ts-ignore
-    return;
+    throw "updateAdmin() is not supported, use signAndBroadcast() to send transactions";
   }
 
   /**
-   * @deprecated The method should not be used
+   * @deprecated Use signAndBroadcast() to send transactions
    */
   public async clearAdmin(
     senderAddress: string,
@@ -141,12 +138,11 @@ export class SecretJs extends SigningCosmWasmClient {
     fee: StdFee,
     memo = ""
   ): Promise<ChangeAdminResult> {
-    //@ts-ignore
-    return;
+    throw "clearAdmin() is not supported, use signAndBroadcast() to send transactions";
   }
 
   /**
-   * @deprecated The method should not be used
+   * @deprecated Use signAndBroadcast() to send transactions
    */
   public async migrate(
     senderAddress: string,
@@ -156,12 +152,11 @@ export class SecretJs extends SigningCosmWasmClient {
     fee: StdFee,
     memo = ""
   ): Promise<MigrateResult> {
-    //@ts-ignore
-    return;
+    throw "migrate() is not supported, use signAndBroadcast() to send transactions";
   }
 
   /**
-   * @deprecated The method should not be used
+   * @deprecated Use signAndBroadcast() to send transactions
    */
   public async execute(
     senderAddress: string,
@@ -171,12 +166,11 @@ export class SecretJs extends SigningCosmWasmClient {
     memo = "",
     funds?: readonly Coin[]
   ): Promise<ExecuteResult> {
-    //@ts-ignore
-    return;
+    throw "execute() is not supported, use signAndBroadcast() to send transactions";
   }
 
   /**
-   * @deprecated The method should not be used
+   * @deprecated Use signAndBroadcast() to send transactions
    */
   public async sendTokens(
     senderAddress: string,
@@ -185,12 +179,11 @@ export class SecretJs extends SigningCosmWasmClient {
     fee: StdFee,
     memo = ""
   ): Promise<BroadcastTxResponse> {
-    //@ts-ignore
-    return;
+    throw "sendTokens() is not supported, use signAndBroadcast() to send transactions";
   }
 
   /**
-   * @deprecated The method should not be used
+   * @deprecated Use signAndBroadcast() to send transactions
    */
   public async delegateTokens(
     delegatorAddress: string,
@@ -199,12 +192,11 @@ export class SecretJs extends SigningCosmWasmClient {
     fee: StdFee,
     memo = ""
   ): Promise<BroadcastTxResponse> {
-    //@ts-ignore
-    return;
+    throw "delegateTokens() is not supported, use signAndBroadcast() to send transactions";
   }
 
   /**
-   * @deprecated The method should not be used
+   * @deprecated Use signAndBroadcast() to send transactions
    */
   public async undelegateTokens(
     delegatorAddress: string,
@@ -213,12 +205,11 @@ export class SecretJs extends SigningCosmWasmClient {
     fee: StdFee,
     memo = ""
   ): Promise<BroadcastTxResponse> {
-    //@ts-ignore
-    return;
+    throw "undelegateTokens() is not supported, use signAndBroadcast() to send transactions";
   }
 
   /**
-   * @deprecated The method should not be used
+   * @deprecated Use signAndBroadcast() to send transactions
    */
   public async withdrawRewards(
     delegatorAddress: string,
@@ -226,7 +217,6 @@ export class SecretJs extends SigningCosmWasmClient {
     fee: StdFee,
     memo = ""
   ): Promise<BroadcastTxResponse> {
-    //@ts-ignore
-    return;
+    throw "withdrawRewards() is not supported, use signAndBroadcast() to send transactions";
   }
 }
