@@ -104,7 +104,8 @@ jobs:
 
   Go-Tests:
     runs-on: ubuntu-20.04
-    needs: [Build-Contracts, Build-LocalSecret]
+    #needs: [Build-Contracts, Build-LocalSecret]
+    needs: [Build-Contracts]
     steps:
       - uses: actions/checkout@v2
         with:
@@ -120,17 +121,17 @@ jobs:
           wget https://download.01.org/intel-sgx/sgx-linux/2.17.1/distro/ubuntu20.04-server/"$SDK_BIN"
           chmod +x "$SDK_BIN"
           echo yes | ./"$SDK_BIN"
-      - name: Download LocalSecret
-        uses: actions/download-artifact@v3
-        with:
-          name: localsecret
-          path: /tmp
+      #- name: Download LocalSecret
+      #  uses: actions/download-artifact@v3
+      #  with:
+      #    name: localsecret
+      #    path: /tmp
       - name: Load images
         run: |
-          docker load --input /tmp/localsecret.tar
-          docker run -v $PWD:/opt/mount --rm --entrypoint cp ghcr.io/scrtlabs/localsecret:v0.0.0 /usr/bin/secretd /opt/mount/secretd
-          docker run -v $PWD:/opt/mount --rm --entrypoint cp ghcr.io/scrtlabs/localsecret:v0.0.0 /usr/lib/libgo_cosmwasm.so /opt/mount/libgo_cosmwasm.so
-          docker run -v $PWD:/opt/mount --rm --entrypoint cp ghcr.io/scrtlabs/localsecret:v0.0.0 /usr/lib/librust_cosmwasm_enclave.signed.so /opt/mount/librust_cosmwasm_enclave.signed.so
+          #docker load --input /tmp/localsecret.tar
+          docker run -v $PWD:/opt/mount --rm --entrypoint cp ghcr.io/scrtlabs/localsecret:v1.4.1-patch.3 /usr/bin/secretd /opt/mount/secretd
+          docker run -v $PWD:/opt/mount --rm --entrypoint cp ghcr.io/scrtlabs/localsecret:v1.4.1-patch.3 /usr/lib/libgo_cosmwasm.so /opt/mount/libgo_cosmwasm.so
+          docker run -v $PWD:/opt/mount --rm --entrypoint cp ghcr.io/scrtlabs/localsecret:v1.4.1-patch.3 /usr/lib/librust_cosmwasm_enclave.signed.so /opt/mount/librust_cosmwasm_enclave.signed.so
 
       - uses: actions/download-artifact@v3
         with:
@@ -246,62 +247,62 @@ jobs:
       - name: Build MacOS CLI
         run: make build_macos_arm64_cli
 
-  Build-LocalSecret:
-    runs-on: ubuntu-20.04
-    services:
-      registry:
-        image: registry:2
-        ports:
-          - 5000:5000
-    steps:
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v2
-        with:
-          driver-opts: network=host
-      - uses: actions/checkout@v2
-        with:
-          submodules: recursive
-      - name: Build LocalSecret Base
-        uses: docker/build-push-action@v3
-        with:
-          file: deployment/dockerfiles/base.Dockerfile
-          context: .
-          build-args: |
-            FEATURES=debug-print
-            SGX_MODE=SW
-          push: true
-          secrets: |
-            API_KEY=00000000000000000000000000000000
-            SPID=FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
-          tags: localhost:5000/scrt-enclave-secretd:latest
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-      - name: Build LocalSecret Release
-        uses: docker/build-push-action@v3
-        with:
-          file: deployment/dockerfiles/release.Dockerfile
-          context: .
-          push: true
-          tags: localhost:5000/release:latest
-          build-args: |
-            SECRET_NODE_TYPE=bootstrap
-            CHAIN_ID=secretdev-1
-            SCRT_BIN_IMAGE=localhost:5000/scrt-enclave-secretd:latest
-      - name: Build LocalSecret Final Dev Image
-        uses: docker/build-push-action@v3
-        with:
-          file: deployment/dockerfiles/dev-image.Dockerfile
-          context: .
-          load: true
-          tags: ghcr.io/scrtlabs/localsecret:v0.0.0
-          build-args: |
-            SCRT_BASE_IMAGE=localhost:5000/release:latest
-          outputs: type=docker,dest=/tmp/localsecret.tar
-      - name: Upload Image
-        uses: actions/upload-artifact@v3
-        with:
-          name: localsecret
-          path: /tmp/localsecret.tar
+  #Build-LocalSecret:
+  #  runs-on: ubuntu-20.04
+  #  services:
+  #    registry:
+  #      image: registry:2
+  #      ports:
+  #        - 5000:5000
+  #  steps:
+  #    - name: Set up Docker Buildx
+  #      uses: docker/setup-buildx-action@v2
+  #      with:
+  #        driver-opts: network=host
+  #    - uses: actions/checkout@v2
+  #      with:
+  #        submodules: recursive
+  #    - name: Build LocalSecret Base
+  #      uses: docker/build-push-action@v3
+  #      with:
+  #        file: deployment/dockerfiles/base.Dockerfile
+  #        context: .
+  #        build-args: |
+  #          FEATURES=debug-print
+  #          SGX_MODE=SW
+  #        push: true
+  #        secrets: |
+  #          API_KEY=00000000000000000000000000000000
+  #          SPID=FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
+  #        tags: localhost:5000/scrt-enclave-secretd:latest
+  #        cache-from: type=gha
+  #        cache-to: type=gha,mode=max
+  #    - name: Build LocalSecret Release
+  #      uses: docker/build-push-action@v3
+  #      with:
+  #        file: deployment/dockerfiles/release.Dockerfile
+  #        context: .
+  #        push: true
+  #        tags: localhost:5000/release:latest
+  #        build-args: |
+  #          SECRET_NODE_TYPE=bootstrap
+  #          CHAIN_ID=secretdev-1
+  #          SCRT_BIN_IMAGE=localhost:5000/scrt-enclave-secretd:latest
+  #    - name: Build LocalSecret Final Dev Image
+  #      uses: docker/build-push-action@v3
+  #      with:
+  #        file: deployment/dockerfiles/dev-image.Dockerfile
+  #        context: .
+  #        load: true
+  #        tags: ghcr.io/scrtlabs/localsecret:v1.4.1-patch.3
+  #        build-args: |
+  #          SCRT_BASE_IMAGE=localhost:5000/release:latest
+  #        outputs: type=docker,dest=/tmp/localsecret.tar
+  #    - name: Upload Image
+  #      uses: actions/upload-artifact@v3
+  #      with:
+  #        name: localsecret
+  #        path: /tmp/localsecret.tar
 
   Build-Hermes:
     runs-on: ubuntu-20.04
@@ -328,7 +329,8 @@ jobs:
 
   Integration-Tests:
     runs-on: ubuntu-20.04
-    needs: [Build-LocalSecret, Build-Hermes]
+    #needs: [Build-LocalSecret, Build-Hermes]
+    needs: [Build-Hermes]
     steps:
       - uses: actions/checkout@v2
         with:
@@ -338,14 +340,14 @@ jobs:
         with:
           name: hermes
           path: /tmp
-      - name: Download LocalSecret
-        uses: actions/download-artifact@v3
-        with:
-          name: localsecret
-          path: /tmp
+      #- name: Download LocalSecret
+      #  uses: actions/download-artifact@v3
+      #  with:
+      #    name: localsecret
+      #    path: /tmp
       - name: Load images
         run: |
-          docker load --input /tmp/localsecret.tar
+          #docker load --input /tmp/localsecret.tar
           docker load --input /tmp/hermes.tar
       - name: Run integration tests
         run: |
@@ -360,7 +362,7 @@ jobs:
           git clone --depth 1 --branch master https://github.com/scrtlabs/secret.js
           cd secret.js
           # Use the docker images that we built just a few steps above
-          perl -i -pe 's/localsecret:.+?"/localsecret:v0.0.0"/' ./test/*
+          perl -i -pe 's/localsecret:.+?"/localsecret:v1.4.1-patch.3"/' ./test/*
           yarn
           yarn test
           docker rm -f localsecret # next step needs the localsecret ports
@@ -373,7 +375,7 @@ jobs:
           git clone --depth 1 --branch secret https://github.com/scrtlabs/cw-plus
           cd cw-plus/contracts/cw20-ics20
           # Use the docker images that we built just a few steps above
-          perl -i -pe 's/localsecret:.+?"/localsecret:v0.0.0"/' ./test/docker-compose.yml
+          perl -i -pe 's/localsecret:.+?"/localsecret:v1.4.1-patch.3"/' ./test/docker-compose.yml
           docker compose -f ./test/docker-compose.yml up -d
           rustup target add wasm32-unknown-unknown
           wget -O - 'https://github.com/WebAssembly/binaryen/releases/download/version_110/binaryen-version_110-x86_64-linux.tar.gz' | tar -xzf -
