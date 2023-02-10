@@ -114,6 +114,8 @@ COPY Makefile .
 RUN true
 COPY client client
 
+RUN go mod graph | awk '$1 !~ /@/ { print $2 }' | xargs -r go get
+
 RUN ln -s /usr/lib/x86_64-linux-gnu/liblz4.so /usr/local/lib/liblz4.so  && ln -s /usr/lib/x86_64-linux-gnu/libzstd.so /usr/local/lib/libzstd.so
 
 RUN mkdir -p /go/src/github.com/enigmampc/SecretNetwork/go-cosmwasm/target/release/
@@ -134,8 +136,20 @@ RUN --mount=type=secret,id=API_KEY,dst=/run/secrets/api_key.txt cat /run/secrets
 RUN --mount=type=secret,id=API_KEY,dst=/run/secrets/api_key.txt cat /run/secrets/api_key.txt > /go/src/github.com/enigmampc/SecretNetwork/ias_keys/sw_dummy/api_key.txt
 RUN --mount=type=secret,id=API_KEY,dst=/run/secrets/api_key.txt cat /run/secrets/api_key.txt >  /go/src/github.com/enigmampc/SecretNetwork/ias_keys/production/api_key.txt
 
-RUN . /opt/sgxsdk/environment && env && CGO_LDFLAGS=${CGO_LDFLAGS} DB_BACKEND=${DB_BACKEND} VERSION=${VERSION} FEATURES=${FEATURES} SGX_MODE=${SGX_MODE} make build_local_no_rust
-RUN . /opt/sgxsdk/environment && env && VERSION=${VERSION} FEATURES=${FEATURES} SGX_MODE=${SGX_MODE} make build_cli
+RUN --mount=type=cache,target=/root/.cache/go-build \
+    . /opt/sgxsdk/environment && env && \
+    CGO_LDFLAGS=${CGO_LDFLAGS} \
+    DB_BACKEND=${DB_BACKEND} \
+    VERSION=${VERSION} \
+    FEATURES=${FEATURES} \
+    SGX_MODE=${SGX_MODE} \
+    make build_local_no_rust
+RUN --mount=type=cache,target=/root/.cache/go-build \
+    . /opt/sgxsdk/environment && env && \
+    VERSION=${VERSION} \
+    FEATURES=${FEATURES} \
+    SGX_MODE=${SGX_MODE} \
+    make build_cli
 
 # ******************* RELEASE IMAGE ******************** #
 FROM $SCRT_RELEASE_BASE_IMAGE as release-image
