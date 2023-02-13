@@ -1,3 +1,6 @@
+use log::*;
+use hex;
+
 use cosmwasm_sgx_vm::{FfiResult, GasInfo, Storage, StorageIterator};
 
 use crate::error::GoResult;
@@ -86,6 +89,7 @@ impl Storage for DB {
         } else {
             Some(unsafe { result_buf.consume() })
         };
+        info!("-peekaboo- (READ) key: {:?}", hex::encode(key));
         (Ok(value), gas_info)
     }
 
@@ -170,6 +174,7 @@ impl Storage for DB {
                 return (Err(err), gas_info);
             }
         }
+        info!("-peekaboo- (WRITE) key: {:?}", hex::encode(key));
         (Ok(()), gas_info)
     }
 
@@ -198,6 +203,7 @@ impl Storage for DB {
                 return (Err(err), gas_info);
             }
         }
+        info!("-peekaboo- (REMOVE) key: {:?}", hex::encode(key));
         (Ok(()), gas_info)
     }
 }
