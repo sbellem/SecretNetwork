@@ -7,7 +7,7 @@ source ./scripts/local_test_params.sh
 
 teebox info-panel "Artifact for Section 5.5" --title "Querying SNIP-20 account balances"
 
-teebox info-panel $'[bold]Victimo[/]: User whose secret balance is being spied on\n[bold]Atako[/]: Attacker who can modify the untrusted code base and simulate transactions and controls two addresses' --title "Cast of Characters"
+teebox info-panel $'[bold]Victimo :innocent:[/]: User whose secret balance is being spied on\n[bold]Atako :rage:[/]: Attacker who can modify the untrusted code base and simulate transactions and controls two addresses' --title "Cast of Characters"
 
 teebox log "Victim (Victimo :innocent:) address=${ACC2}, balance=12343"
 teebox log "Attacker (Atako :rage:) first address=${ACC0}, balance=10000"
