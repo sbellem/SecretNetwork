@@ -22,6 +22,15 @@ services:
     volumes:
       - genesis:/genesis
       - snip20:/root/snip20
+    depends_on:
+      localsecret-1:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://127.0.0.1:26657"]
+      interval: 1m30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
 
 volumes:
   genesis:

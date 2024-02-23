@@ -51,6 +51,9 @@ services:
       secrets:
         - API_KEY
         - SPID
+    depends_on:
+      localsecret-1:
+        condition: service_healthy
     # ports are only here in case interaction
     # between localhost and container is desired
     #ports:
