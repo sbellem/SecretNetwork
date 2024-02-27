@@ -34,9 +34,9 @@ export SN_VERBOSE=${verbose}
 
 stop_network() {
     if [[ ${verbose} -eq 1 ]]; then
-        docker compose --file ${COMPOSE_FILE} down
+        docker compose --file ${COMPOSE_FILE} down --volumes --remove-orphans
     else
-        docker compose --file ${COMPOSE_FILE} down &>/dev/null
+        docker compose --file ${COMPOSE_FILE} down --volumes --remove-orphans &>/dev/null
     fi
 }
 
@@ -86,13 +86,14 @@ wait_for_blocks() {
 
 start_network() {
     if [[ ${verbose} -eq 1 ]]; then
-        docker compose --file ${COMPOSE_FILE} up -d
+        docker compose --file ${COMPOSE_FILE} up localsecret-1 localsecret-2 -d
+        docker compose --file ${COMPOSE_FILE} up block-watcher
     else
-        docker compose --file ${COMPOSE_FILE} up -d &>/dev/null
+        docker compose --file ${COMPOSE_FILE} up localsecret-1 localsecret-2 -d &>/dev/null
+        docker compose --file ${COMPOSE_FILE} up block-watcher
     fi
 
-    wait_for_blocks localsecret-2 24
-
+    docker compose --file ${COMPOSE_FILE} run --rm block-watcher teebox wait-for-blocks 24 --hostname localsecret-2
     docker_log localsecret-2 10
 
     docker compose --file ${COMPOSE_FILE} exec localsecret-2 ./scripts/set_init_states_toy_swap.sh ${verbose}
@@ -104,12 +105,13 @@ start_network() {
 }
 
 print_status() {
-    echo
-    echo "*************************************************************************"
-    echo "*                                                                       *"
-    echo "*  Secret Network Test Nodes are now setup, and ready for experiments.  *"
-    echo "*                                                                       *"
-    echo "*************************************************************************"
+    docker compose --file ${COMPOSE_FILE} exec localsecret-2 teebox info-panel "Secret Network Test Nodes are now setup, and ready for experiments" --title "Setup Done :lab:"
+    #echo
+    #echo "*************************************************************************"
+    #echo "*                                                                       *"
+    #echo "*  Secret Network Test Nodes are now setup, and ready for experiments.  *"
+    #echo "*                                                                       *"
+    #echo "*************************************************************************"
 
     printf "\nNode 2 status info:\n"
 

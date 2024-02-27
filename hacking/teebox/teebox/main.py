@@ -3,6 +3,7 @@ import json
 import subprocess
 import time
 
+import requests
 import typer
 from typing_extensions import Annotated
 
@@ -86,7 +87,51 @@ def log(text: str):
 
 
 @app.command()
-def show_mev_stats(csvfile):
+def wait_for_blocks(
+    block_height: int, hostname: Annotated[str, typer.Option()] = "localhost"
+):
+    status_endpoint = f"http://{hostname}:26657/status"
+
+    with Progress() as progress:
+        # task1 = progress.add_task("[red]Downloading...", total=1000)
+        # task2 = progress.add_task("[green]Processing...", total=1000)
+        task3 = progress.add_task(
+            f"[cyan]Waiting for node[/] [yellow]{hostname}[/] [cyan]to produce[/] [yellow]{block_height}[/] [cyan]blocks ...[/]\n",
+            total=block_height,
+        )
+
+        while True:
+            try:
+                response = requests.get(status_endpoint)
+            except requests.RequestException:
+                continue
+
+            current_block_height = int(
+                response.json()["result"]["sync_info"]["latest_block_height"]
+            )
+
+            break
+
+        # console.log(f"current_block_height={current_block_height}")
+
+        while not progress.finished:
+            response = requests.get(status_endpoint)
+            latest_block_height = int(
+                response.json()["result"]["sync_info"]["latest_block_height"]
+            )
+            # console.log("prev block height=", current_block_height)
+            # console.log("latest block height=", latest_block_height)
+            advance = latest_block_height - current_block_height
+            # console.log("advance=", advance)
+            current_block_height = latest_block_height
+            progress.update(task3, advance=advance)
+            time.sleep(1.5)
+
+        # console.log(f"current_block_height={current_block_height}")
+
+
+@app.command()
+def show_mev_stats(csvfile: str):
     with open(csvfile) as f:
         lines = f.readlines()
 

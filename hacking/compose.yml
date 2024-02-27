@@ -32,6 +32,18 @@ services:
       retries: 3
       start_period: 40s
 
+  block-watcher:
+    image: teebox
+    build:
+      context: teebox
+      dockerfile: Dockerfile
+    depends_on:
+      localsecret-2:
+        condition: service_healthy
+    volumes:
+      - ./teebox:/usr/src/teebox
+    command: sleep 1
+
 volumes:
   genesis:
   snip20:
