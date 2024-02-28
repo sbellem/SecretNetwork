@@ -93,10 +93,15 @@ start_network() {
         docker compose --file ${COMPOSE_FILE} up block-watcher
     fi
 
-    docker compose --file ${COMPOSE_FILE} run --rm block-watcher teebox wait-for-blocks 24 --hostname localsecret-2
+    docker compose --file ${COMPOSE_FILE} run --rm block-watcher teebox wait-for-blocks 14 --hostname localsecret-2
     docker_log localsecret-2 10
 
+    echo
+    docker compose --file ${COMPOSE_FILE} exec localsecret-2 teebox info-panel "Deploying the swap contract on-chain and initializing liquidity pools" --title "Toy Swap Contract Deployment"
     docker compose --file ${COMPOSE_FILE} exec localsecret-2 ./scripts/set_init_states_toy_swap.sh ${verbose}
+
+    echo
+    docker compose --file ${COMPOSE_FILE} exec localsecret-2 teebox info-panel "Deploying the SNIP20 contract on-chain" --title "SNIP20 Contract Deployment"
     docker compose --file ${COMPOSE_FILE} exec localsecret-2 ./scripts/setup_snip20.sh ${verbose}
 
     stop_node localsecret-1
@@ -105,7 +110,8 @@ start_network() {
 }
 
 print_status() {
-    docker compose --file ${COMPOSE_FILE} exec localsecret-2 teebox info-panel "Secret Network Test Nodes are now setup, and ready for experiments" --title "Setup Done :lab:"
+    echo
+    docker compose --file ${COMPOSE_FILE} exec localsecret-2 teebox info-panel "Secret Network Test Nodes are now setup, and ready for experiments" --title ":checkered_flag:"
     #echo
     #echo "*************************************************************************"
     #echo "*                                                                       *"

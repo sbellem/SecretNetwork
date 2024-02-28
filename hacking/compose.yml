@@ -27,10 +27,10 @@ services:
         condition: service_healthy
     healthcheck:
       test: ["CMD", "curl", "-f", "http://127.0.0.1:26657"]
-      interval: 1m30s
-      timeout: 10s
-      retries: 3
-      start_period: 40s
+      interval: 3s
+      timeout: 1s
+      retries: 120
+      start_period: 5s
 
   block-watcher:
     image: teebox
