@@ -165,8 +165,8 @@ while [[ "$(bc <<< "${high} - ${low}")" -ne 0 ]]; do
         high=$(bc <<< "${probe} - 1");
         teebox log "Transaction simulation [red]failed[/], [bold yellow]probe[/] is too high ([bold yellow]probe[/] + [bold yellow]B[/] >= 2^128)"
         teebox log "Decrease next [bold yellow]probe[/] amount by setting [bold]high[/]=([bold][yellow]probe[/]-1)=${high}[/]"
-        balance_floor=$(bc <<< "2^128 - ${probe}")
-        teebox log "Balance [bold yellow]B[/] >= ${balance_floor}"
+        balance_floor=$(bc <<< "2^128 -1 - ${probe}")
+        teebox log "Balance [bold yellow]B[/] > ${balance_floor}"
     else
         low=${probe};
         teebox log "Transaction simulation [green]succeeded[/], [bold yellow]probe[/] is low enough ([bold yellow]probe[/] + [bold yellow]B[/] < 2^128)"
