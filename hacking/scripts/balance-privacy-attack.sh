@@ -9,6 +9,38 @@ attacker1=${ACC0}
 attacker2=${ACC1}
 victim=${ACC2}
 
+a1_vk=`cat ${BACKUP}/attacker1_viewing_key`
+a2_vk=`cat ${BACKUP}/attacker2_viewing_key`
+victim_vk=`cat ${BACKUP}/victim_viewing_key`
+
+get_balance() {
+    addr=$1
+    vk=$2
+    balance=`secretd query snip20 balance ${CONTRACT_ADDRESS} ${addr} ${vk}`
+    echo ${balance} | jq .balance.amount
+}
+
+
+show_attacker_balance() {
+    addr=$1
+    vk=$2
+    label=$3
+    balance=`get_balance ${addr} ${vk}`
+    teebox log "attacker balance\[${label}]=${balance}"
+}
+
+show_attacker2_balance() {
+    balance_addr2=`get_balance ${attacker2} ${a2_vk}`
+    teebox log "attacker balance\[addr2]=${balance_addr2}"
+}
+
+show_attacker_balances() {
+    balance_addr1=`get_balance ${attacker1} ${a1_vk}`
+    balance_addr2=`get_balance ${attacker2} ${a2_vk}`
+    teebox log "attacker balance\[addr1]=${balance_addr1}"
+    teebox log "attacker balance\[addr2]=${balance_addr2}"
+}
+
 echo
 teebox info-panel "Artifact for Section 5.5" --title "Querying SNIP-20 account balances"
 
